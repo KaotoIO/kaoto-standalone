@@ -1,0 +1,13 @@
+version: '3'
+services:
+  kaoto-backend-svc:
+    image: kaotoio/backend:nightly
+    ports: 
+      - 8081:8081
+  web:
+    image: kaotoio/frontend:nightly
+    ports:
+      - 8080:8080
+    depends_on:
+      - kaoto-backend-svc
+
