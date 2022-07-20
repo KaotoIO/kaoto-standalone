@@ -7,7 +7,7 @@ on:
 jobs:
 
   build:
-
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: docker/login-action@v2
@@ -16,4 +16,4 @@ jobs:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
     - name: Build the Docker image
-      run: IMG_NAME=quay.io/kaotoio/kaoto-standalone make build-and-push 
+      run: IMG_NAME=quay.io/kaotoio/standalone make build-and-push 
