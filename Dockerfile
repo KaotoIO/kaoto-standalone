@@ -1,63 +1,53 @@
-FROM node:16 as sourcebuild
+# Frontend build
+FROM node:16 as FRONTEND
 ARG ui_tag=main
-ARG api_tag=main
-
 WORKDIR /app
 RUN git clone --depth 1 --branch ${ui_tag} https://github.com/KaotoIO/kaoto-ui.git 
-RUN git clone --depth 1 --branch ${api_tag} https://github.com/KaotoIO/kaoto-backend.git 
-
 WORKDIR /app/kaoto-ui
 RUN yarn install --mode=skip-build
-
 RUN KAOTO_API="" yarn run build
 
-#--- backend build
-FROM registry.access.redhat.com/ubi8/openjdk-17 as kaotobuild
+#Backend build
+FROM quay.io/quarkus/ubi-quarkus-native-image:22.1-java17 as BACKEND
+ARG api_tag=main
 USER root
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
-RUN mvn -version
+RUN microdnf install git curl
+COPY --chown=quarkus:quarkus mvnw /code/mvnw
+COPY --chown=quarkus:quarkus .mvn /code/.mvn
+USER quarkus
+WORKDIR /code
+RUN git clone --depth 1 --branch ${api_tag} https://github.com/KaotoIO/kaoto-backend.git 
+WORKDIR /code/kaoto-backend
+RUN rm api/src/main/resources/META-INF/resources/*
+COPY --from=FRONTEND /app/kaoto-ui/dist/* api/src/main/resources/META-INF/resources/
+RUN /code/mvnw install -Pnative -DskipTests
 
+#Final image
+FROM quay.io/quarkus/quarkus-micro-image:1.0
 
-RUN mkdir /app \ 
-    &&  chown -R 1001 /app \
-     && chmod -R "g+rwX" /app \
-     && chown -R 1001:root /app 
-COPY --from=sourcebuild /app/kaoto-backend/  /app/kaoto-backend/
-WORKDIR /app/kaoto-backend
+#Get curl
+COPY --from=BACKEND /usr/bin/curl   /usr/bin/
+COPY --from=BACKEND \
+ /lib64/libcurl.so.4 /lib64/libssl.so.1.1 /lib64/libcrypto.so.1.1  \
+ /lib64/libnghttp2.so.14 /lib64/libidn2.so.0 /lib64/libssh.so.4 \
+ /lib64/libpsl.so.5 /lib64/libgssapi_krb5.so.2 /lib64/libkrb5.so.3 \
+ /lib64/libk5crypto.so.3  /lib64/libcom_err.so.2 /lib64/libldap-2.4.so.2 \
+ /lib64/liblber-2.4.so.2 /lib64/libbrotlidec.so.1 /lib64/libunistring.so.2 \
+ /lib64/libkrb5support.so.0 /lib64/libkeyutils.so.1 /lib64/libsasl2.so.3 \
+ /lib64/libbrotlicommon.so.1 /lib64/libcrypt.so.1 \
+ /lib64/
 
-COPY --from=sourcebuild /app/kaoto-ui/dist/ /app/kaoto-backend/api/src/main/resources/META-INF/resources/
-RUN mvn install -DskipTests=true -Dcheckstyle.skip=true
-
-
-# #--- kaoto run 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3
-
-ARG JAVA_PACKAGE=java-17-openjdk-headless
-ARG RUN_JAVA_VERSION=1.3.8
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' 
-# Install java and the run-java script
-# Also set up permissions for user `1001`
-RUN microdnf install curl ca-certificates ${JAVA_PACKAGE} \
-    && microdnf update \
-    && microdnf clean all \
-    && mkdir /deployments \
-    && chown 1001 /deployments \
-    && chmod "g+rwX" /deployments \
-    && chown 1001:root /deployments \
-    && curl https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh -o /deployments/run-java.sh \
-    && chown 1001 /deployments/run-java.sh \
-    && chmod 540 /deployments/run-java.sh \
-    && echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/conf/security/java.security
-
-# Configure the JAVA_OPTIONS, you can add -XshowSettings:vm to also display the heap size.
-ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.kubernetes-client.trust-certs=true"
-# We make four distinct layers so if there are application changes the library layers can be re-used
- COPY --chown=1001 --from=kaotobuild /app/kaoto-backend/api/target/quarkus-app/lib/ /deployments/lib/
-COPY --chown=1001 --from=kaotobuild /app/kaoto-backend/api/target/quarkus-app/*.jar /deployments/
- COPY --chown=1001 --from=kaotobuild /app/kaoto-backend/api/target/quarkus-app/app/ /deployments/app/
- COPY --chown=1001 --from=kaotobuild /app/kaoto-backend/api/target/quarkus-app/quarkus/ /deployments/quarkus/
+# Get Kaoto
+WORKDIR /work/
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+COPY --chown=1001 --from=BACKEND /code/kaoto-backend/api/target/*-runner /work/application
 
 EXPOSE 8081
 USER 1001
 
-ENTRYPOINT [ "/deployments/run-java.sh" ]
+HEALTHCHECK --interval=3s --start-period=1s CMD curl --fail http://localhost:8081/ || exit 1
+
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.kubernetes-client.trust-certs=true"]
+
