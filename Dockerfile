@@ -4,7 +4,7 @@ ARG ui_tag=main
 WORKDIR /app
 RUN git clone --depth 1 --branch ${ui_tag} https://github.com/KaotoIO/kaoto-ui.git 
 WORKDIR /app/kaoto-ui
-RUN yarn install
+RUN yarn install --mode=skip-build
 RUN KAOTO_API="" yarn run build
 
 #Backend build
