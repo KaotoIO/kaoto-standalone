@@ -60,4 +60,6 @@ COPY --chown=1001 --from=kaotobuild /app/kaoto-backend/api/target/quarkus-app/*.
 EXPOSE 8081
 USER 1001
 
+HEALTHCHECK --interval=3s --start-period=10s CMD curl --fail http://localhost:8081/ || exit 1
+
 ENTRYPOINT [ "/deployments/run-java.sh" ]
