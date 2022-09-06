@@ -32,8 +32,9 @@ jobs:
           type=semver,pattern={{major}}
           type=sha
     - name: Get build-args for Docker
+      id: build-args
       run: |
-        echo "::set-output name=kaoto_tag::${{ github.ref_name }}"
+        echo "::set-output name=KAOTO_TAG::${{ github.ref_name }}"
         echo "Tag is ${{ github.ref_name }}."
     - name: Build to test
       uses: docker/build-push-action@v3
@@ -42,8 +43,8 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args:  |
-                  UI_TAG=${{ steps.meta.outputs.kaoto_tag }}
-                  API_TAG=${{ steps.meta.outputs.kaoto_tag }}
+                  UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+                  API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
     - name: Run built image
       run: docker run -d --rm --name kaoto-standalone kaotoio/standalone:${{ steps.meta.outputs.version }}
     - name: Check health
