@@ -77,6 +77,7 @@ jobs:
     - name: Push to Quay.io
       run: |
             IMG_NAME=quay.io/kaotoio/standalone 
+            IMG_VERSION=${{ steps.meta.outputs.version }}
             UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
             API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
             make build-and-push 
