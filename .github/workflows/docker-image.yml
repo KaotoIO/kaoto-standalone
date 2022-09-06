@@ -74,18 +74,9 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-    - uses: mr-smithers-excellent/docker-build-push@v5
-      if: ${{ github.event_name != 'pull_request' }}
-      name: Push to Quay.io
-      with:
-        image: kaotoio/standalone
-        registry: quay.io
-        addLatest: true
-        username: ${{ secrets.QUAY_USERNAME }}
-        password: ${{ secrets.QUAY_PASSWORD }}
-        buildArgs:  |
-                  UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
-                  API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
-    - name: Image digest
-      if: ${{ github.event_name != 'pull_request' }}
-      run: echo ${{ steps.docker_build.outputs.digest }}
+    - name: Push to Quay.io
+      run: |
+            IMG_NAME=quay.io/kaotoio/standalone 
+            UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+            API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+            make build-and-push 
