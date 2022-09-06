@@ -83,9 +83,7 @@ jobs:
         addLatest: true
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        build-args:  |
+        buildArgs:  |
                   UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
                   API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
     - name: Image digest
