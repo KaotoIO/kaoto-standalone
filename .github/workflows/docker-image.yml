@@ -67,13 +67,27 @@ jobs:
         registry: quay.io
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
-    - name: Build and push
+    - name: Push to Docker.io
       uses: docker/build-push-action@v3
       if: ${{ github.event_name != 'pull_request' }}
       with:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+    - uses: mr-smithers-excellent/docker-build-push@v5
+      if: ${{ github.event_name != 'pull_request' }}
+      name: Push to Quay.io
+      with:
+        image: kaotoio/standalone
+        registry: quay.io
+        addLatest: true
+        username: ${{ secrets.QUAY_USERNAME }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args:  |
+                  UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+                  API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
     - name: Image digest
       if: ${{ github.event_name != 'pull_request' }}
       run: echo ${{ steps.docker_build.outputs.digest }}
