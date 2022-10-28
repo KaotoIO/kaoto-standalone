@@ -75,6 +75,7 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
     - name: Push to Quay.io
+      if: ${{ github.event_name != 'pull_request' }}
       run: |
             IMG_NAME=quay.io/kaotoio/standalone 
             IMG_VERSION=${{ steps.meta.outputs.version }}
