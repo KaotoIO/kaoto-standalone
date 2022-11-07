@@ -71,10 +71,15 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        build-args:  |
+                  UI_TAG=${{ inputs.frontend-version }}
+                  API_TAG=${{ inputs.backend-version }}
+                  IMG_VERSION=${{ inputs.standalone-version }}
+                  IMG_NAME=kaotoio/standalone
     - name: Push to Quay.io
       run: |
             IMG_NAME=quay.io/kaotoio/standalone 
-            IMG_VERSION=${{ steps.meta.outputs.version }}
+            IMG_VERSION=${{ inputs.standalone-version }}
             UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
             API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
             make build-and-push 
