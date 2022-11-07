@@ -43,8 +43,10 @@ jobs:
         build-args:  |
                   UI_TAG=${{ inputs.frontend-version }}
                   API_TAG=${{ inputs.backend-version }}
+                  IMG_VERSION=${{ inputs.standalone-version }}
+                  IMG_NAME=kaotoio/standalone
     - name: Run built image
-      run: docker run -d --rm --name kaoto-standalone kaotoio/standalone:${{ steps.meta.outputs.version }}
+      run: docker run -d --rm --name kaoto-standalone kaotoio/standalone:${{ inputs.standalone-version }}
     - name: Check health
       uses: stringbean/docker-healthcheck-action@v1
       with:
