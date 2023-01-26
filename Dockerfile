@@ -8,7 +8,7 @@ RUN yarn install --mode=skip-build
 RUN KAOTO_API="" yarn run build
 
 #Backend build
-FROM quay.io/quarkus/ubi-quarkus-native-image:22.1-java17 as BACKEND
+FROM quay.io/quarkus/ubi-quarkus-native-image:22.3-java17 as BACKEND
 ARG API_TAG
 USER root
 RUN microdnf install git curl
