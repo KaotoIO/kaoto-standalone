@@ -74,6 +74,9 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        build-args:  |
+           UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+           API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
     - name: Push to Quay.io
       if: ${{ github.event_name != 'pull_request' }}
       run: |
