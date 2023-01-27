@@ -31,11 +31,6 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=semver,pattern={{major}}
           type=sha
-    - name: Get build-args for Docker
-      id: build-args
-      run: |
-        echo "::set-output name=KAOTO_TAG::${{ github.ref_name }}"
-        echo "Tag is ${{ github.ref_name }}."
     - name: Build to test
       uses: docker/build-push-action@v3
       with:
@@ -43,8 +38,8 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args:  |
-                  UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
-                  API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+                  UI_TAG=${{ github.ref_name }}
+                  API_TAG=${{ github.ref_name }}
     - name: Run built image
       run: docker run -d --rm --name kaoto-standalone kaotoio/standalone:${{ steps.meta.outputs.version }}
     - name: Check health
@@ -75,13 +70,13 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args:  |
-           UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
-           API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+           UI_TAG=${{ github.ref_name }}
+           API_TAG=${{ github.ref_name }}
     - name: Push to Quay.io
       if: ${{ github.event_name != 'pull_request' }}
       run: |
             IMG_NAME=quay.io/kaotoio/standalone 
             IMG_VERSION=${{ steps.meta.outputs.version }}
-            UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
-            API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+            UI_TAG=${{ github.ref_name }}
+            API_TAG=${{ github.ref_name }}
             make build-and-push 
