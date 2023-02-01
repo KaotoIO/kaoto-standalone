@@ -37,7 +37,7 @@ jobs:
         echo "::set-output name=KAOTO_TAG::${{ github.ref_name }}"
         echo "Tag is ${{ github.ref_name }}."
     - name: Build to test
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       with:
         load: true
         tags: ${{ steps.meta.outputs.tags }}
@@ -68,7 +68,7 @@ jobs:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
     - name: Push to Docker.io
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       if: ${{ github.event_name != 'pull_request' }}
       with:
         push: true

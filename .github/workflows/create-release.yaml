@@ -35,7 +35,7 @@ jobs:
       run: |
         echo "::set-output name=KAOTO_TAG::${{ inputs.standalone-version }}"
     - name: Build to test
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       with:
         load: true
         tags: ${{ steps.meta.outputs.tags }}
@@ -64,7 +64,7 @@ jobs:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
     - name: Push to Docker.io
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       with:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
