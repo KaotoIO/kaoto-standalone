@@ -46,7 +46,7 @@ jobs:
     - name: Run built image
       run: docker run -d --rm --name kaoto-standalone kaotoio/standalone:${{ steps.meta.outputs.version }}
     - name: Check health
-      uses: stringbean/docker-healthcheck-action@v1
+      uses: stringbean/docker-healthcheck-action@v2
       with:
         container: kaoto-standalone
         wait-time: 50
