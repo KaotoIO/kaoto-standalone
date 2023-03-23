@@ -24,16 +24,10 @@ jobs:
         images: kaotoio/standalone
         tags: |
           type=schedule
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
+          type=semver,pattern={{version}},value=${{ inputs.standalone-version }}
+          type=semver,pattern={{major}}.{{minor}},value=${{ inputs.standalone-version }}
+          type=semver,pattern={{major}},value=${{ inputs.standalone-version }}
           type=sha
-    - name: Get build-args for Docker
-      id: build-args
-      run: |
-        echo "::set-output name=KAOTO_TAG::${{ inputs.standalone-version }}"
     - name: Build to test
       uses: docker/build-push-action@v4
       with:
@@ -69,10 +63,13 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        build-args:  |
+                  UI_TAG=${{ inputs.frontend-version }}
+                  API_TAG=${{ inputs.backend-version }}
     - name: Push to Quay.io
       run: |
             IMG_NAME=quay.io/kaotoio/standalone 
             IMG_VERSION=${{ steps.meta.outputs.version }}
-            UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
-            API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+            UI_TAG=${{ inputs.frontend-version }}
+            API_TAG=${{ inputs.backend-version }}
             make build-and-push 
