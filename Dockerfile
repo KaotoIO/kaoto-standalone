@@ -1,22 +1,22 @@
 # Frontend build
 FROM node:16 as FRONTEND
-ARG ui_tag=main
+ARG UI_TAG=main
 WORKDIR /app
-RUN git clone --depth 1 --branch ${ui_tag} https://github.com/KaotoIO/kaoto-ui.git 
+RUN git clone --depth 1 --branch ${UI_TAG} https://github.com/KaotoIO/kaoto-ui.git --single-branch
 WORKDIR /app/kaoto-ui
 RUN yarn install --mode=skip-build
 RUN KAOTO_API="" yarn run build
 
 #Backend build
 FROM quay.io/quarkus/ubi-quarkus-native-image:22.3-java17 as BACKEND
-ARG api_tag=main
+ARG API_TAG=main
 USER root
 RUN microdnf install git curl
 COPY --chown=quarkus:quarkus mvnw /code/mvnw
 COPY --chown=quarkus:quarkus .mvn /code/.mvn
 USER quarkus
 WORKDIR /code
-RUN git clone --depth 1 --branch ${api_tag} https://github.com/KaotoIO/kaoto-backend.git 
+RUN git clone --depth 1 --branch ${API_TAG} https://github.com/KaotoIO/kaoto-backend.git --single-branch
 WORKDIR /code/kaoto-backend
 RUN rm api/src/main/resources/META-INF/resources/*
 COPY --from=FRONTEND /app/kaoto-ui/dist/* api/src/main/resources/META-INF/resources/

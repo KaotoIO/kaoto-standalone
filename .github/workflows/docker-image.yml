@@ -43,8 +43,8 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args:  |
-                  UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
-                  API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
+                  UI_TAG=main
+                  API_TAG=main
     - name: Run built image
       run: docker run -d --rm --name kaoto-standalone kaotoio/standalone:${{ steps.meta.outputs.version }}
     - name: Check health
