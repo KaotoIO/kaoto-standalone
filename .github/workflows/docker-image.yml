@@ -34,7 +34,7 @@ jobs:
     - name: Get build-args for Docker
       id: build-args
       run: |
-        echo "::set-output name=KAOTO_TAG::${{ github.ref_name }}"
+        echo "{KAOTO_TAG}={${{ github.ref_name }}}" >> $GITHUB_OUTPUT
         echo "Tag is ${{ github.ref_name }}."
     - name: Build to test
       uses: docker/build-push-action@v4
@@ -77,8 +77,8 @@ jobs:
     - name: Push to Quay.io
       if: ${{ github.event_name != 'pull_request' }}
       run: |
-            IMG_NAME=quay.io/kaotoio/standalone 
+            IMG_NAME=quay.io/kaotoio/standalone
             IMG_VERSION=${{ steps.meta.outputs.version }}
             UI_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
             API_TAG=${{ steps.build-args.outputs.KAOTO_TAG }}
-            make build-and-push 
+            make build-and-push
