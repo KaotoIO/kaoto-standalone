@@ -1,0 +1,42 @@
+name: Build PR
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  KAOTO_TAG: ${{ github.sha }}
+  UI_TAG: main
+  API_TAG: main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v3        
+    - name: 'Build Container Image'
+      run: |
+        docker build \
+          --build-arg ui_tag=${UI_TAG} \
+          --build-arg api_tag=${API_TAG} \
+          -t docker.io/kaotoio/standalone:$KAOTO_TAG \
+          .
+
+    - name: 'Run built image'
+      run: |
+        docker run -d --rm --name kaoto-standalone docker.io/kaotoio/standalone:$KAOTO_TAG
+
+    - name: Check health
+      uses: stringbean/docker-healthcheck-action@v2
+      with:
+        container: kaoto-standalone
+        wait-time: 50
+        require-status: running
+        require-healthy: true
