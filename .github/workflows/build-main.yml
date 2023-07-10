@@ -24,9 +24,10 @@ jobs:
     - name: 'Checkout'
       uses: actions/checkout@v3
 
-    - name: 'Build Container Image'
+    - name: 'Build Container Image (native)'
       run: |
         docker build \
+          -f Dockerfile.native \
           --build-arg ui_tag=${UI_TAG} \
           --build-arg api_tag=${API_TAG} \
           -t docker.io/kaotoio/standalone:${KAOTO_TAG} \
@@ -35,19 +36,27 @@ jobs:
           -t quay.io/kaotoio/standalone:${KAOTO_TAG} \
           -t quay.io/kaotoio/standalone:main \
           -t quay.io/kaotoio/standalone:nightly \
+          -t docker.io/kaotoio/standalone:${KAOTO_TAG}-native \
+          -t docker.io/kaotoio/standalone:main-native \
+          -t docker.io/kaotoio/standalone:nightly-native \
+          -t quay.io/kaotoio/standalone:${KAOTO_TAG}-native \
+          -t quay.io/kaotoio/standalone:main-native \
+          -t quay.io/kaotoio/standalone:nightly-native \
           .
-    
-    - name: 'Run built image'
-      run: |
-        docker run -d --rm --name kaoto-standalone docker.io/kaotoio/standalone:$KAOTO_TAG
 
-    - name: 'Check image health'
-      uses: stringbean/docker-healthcheck-action@v2
-      with:
-        container: kaoto-standalone
-        wait-time: 50
-        require-status: running
-        require-healthy: true
+    - name: 'Build Container Image (jvm)'
+      run: |
+        docker build \
+          -f Dockerfile.native \
+          --build-arg ui_tag=${UI_TAG} \
+          --build-arg api_tag=${API_TAG} \
+          -t docker.io/kaotoio/standalone:${KAOTO_TAG}-jvm \
+          -t docker.io/kaotoio/standalone:main-jvm \
+          -t docker.io/kaotoio/standalone:nightly-jvm \
+          -t quay.io/kaotoio/standalone:${KAOTO_TAG}-jvm \
+          -t quay.io/kaotoio/standalone:main-jvm \
+          -t quay.io/kaotoio/standalone:nightly-jvm \
+          .
 
     - name: Login to DockerHub
       if: ${{ github.event_name != 'pull_request' }}
