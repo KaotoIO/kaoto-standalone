@@ -1,0 +1,38 @@
+# Frontend build
+FROM node:16 as FRONTEND
+ARG UI_TAG=main
+WORKDIR /app
+RUN git clone --depth 1 --branch ${UI_TAG} https://github.com/KaotoIO/kaoto-ui.git --single-branch
+WORKDIR /app/kaoto-ui
+RUN yarn install --mode=skip-build
+RUN KAOTO_API="" yarn run build
+
+#Backend build
+FROM registry.access.redhat.com/ubi8/openjdk-17:1.16 as BACKEND
+ARG API_TAG=main
+USER root
+RUN microdnf install git curl
+COPY mvnw /code/mvnw
+COPY .mvn /code/.mvn
+WORKDIR /code
+RUN git clone --depth 1 --branch ${API_TAG} https://github.com/KaotoIO/kaoto-backend.git --single-branch
+WORKDIR /code/kaoto-backend
+RUN rm api/src/main/resources/META-INF/resources/*
+COPY --from=FRONTEND /app/kaoto-ui/dist/* api/src/main/resources/META-INF/resources/
+RUN /code/mvnw install -DskipTests
+
+FROM registry.access.redhat.com/ubi8/openjdk-17:1.16
+
+ENV LANGUAGE='en_US:en'
+
+# We make four distinct layers so if there are application changes the library layers can be re-used
+COPY --chown=185 --from=BACKEND /code/kaoto-backend/api/target/quarkus-app/lib/ /deployments/lib/
+COPY --chown=185 --from=BACKEND /code/kaoto-backend/api/target/quarkus-app/*.jar /deployments/
+COPY --chown=185 --from=BACKEND /code/kaoto-backend/api/target/quarkus-app/app/ /deployments/app/
+COPY --chown=185 --from=BACKEND /code/kaoto-backend/api/target/quarkus-app/quarkus/ /deployments/quarkus/
+
+EXPOSE 8080
+USER 185
+ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.kubernetes-client.trust-certs=true"
+ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
+

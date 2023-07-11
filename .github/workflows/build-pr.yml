@@ -1,0 +1,36 @@
+name: Build PR
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  KAOTO_TAG: ${{ github.sha }}
+  UI_TAG: main
+  API_TAG: main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant:
+        - native
+        - jvm
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v3        
+    - name: 'Build Container Image ${{ matrix.variant }}'
+      run: |
+        docker build \
+          -f Dockerfile.${{ matrix.variant }} \
+          --build-arg ui_tag=${UI_TAG} \
+          --build-arg api_tag=${API_TAG} \
+          -t docker.io/kaotoio/standalone:$KAOTO_TAG-${{ matrix.variant }} \
+          .

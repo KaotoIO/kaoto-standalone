@@ -25,18 +25,6 @@ RUN /code/mvnw install -Pnative -DskipTests
 #Final image
 FROM quay.io/quarkus/quarkus-micro-image:1.0
 
-#Get curl
-COPY --from=BACKEND /usr/bin/curl   /usr/bin/
-COPY --from=BACKEND \
- /lib64/libcurl.so.4 /lib64/libssl.so.1.1 /lib64/libcrypto.so.1.1  \
- /lib64/libnghttp2.so.14 /lib64/libidn2.so.0 /lib64/libssh.so.4 \
- /lib64/libpsl.so.5 /lib64/libgssapi_krb5.so.2 /lib64/libkrb5.so.3 \
- /lib64/libk5crypto.so.3  /lib64/libcom_err.so.2 /lib64/libldap-2.4.so.2 \
- /lib64/liblber-2.4.so.2 /lib64/libbrotlidec.so.1 /lib64/libunistring.so.2 \
- /lib64/libkrb5support.so.0 /lib64/libkeyutils.so.1 /lib64/libsasl2.so.3 \
- /lib64/libbrotlicommon.so.1 /lib64/libcrypt.so.1 \
- /lib64/
-
 # Get Kaoto
 WORKDIR /work/
 RUN chown 1001 /work \
@@ -46,8 +34,6 @@ COPY --chown=1001 --from=BACKEND /code/kaoto-backend/api/target/*-runner /work/a
 
 EXPOSE 8081
 USER 1001
-
-HEALTHCHECK --interval=3s --start-period=1s CMD curl --fail http://localhost:8081/ || exit 1
 
 CMD ["./application", "-Dquarkus.http.host=0.0.0.0", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-Dquarkus.kubernetes-client.trust-certs=true"]
 

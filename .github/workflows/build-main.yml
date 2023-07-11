@@ -1,0 +1,83 @@
+name: Build Main
+
+on:
+  push:
+    branches:
+      - 'main'
+  schedule:
+    - cron:  '12 0 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  KAOTO_TAG: ${{ github.sha }}
+  UI_TAG: main
+  API_TAG: main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v3
+
+    - name: 'Build Container Image (native)'
+      run: |
+        docker build \
+          -f Dockerfile.native \
+          --build-arg ui_tag=${UI_TAG} \
+          --build-arg api_tag=${API_TAG} \
+          -t docker.io/kaotoio/standalone:${KAOTO_TAG} \
+          -t docker.io/kaotoio/standalone:main \
+          -t docker.io/kaotoio/standalone:nightly \
+          -t quay.io/kaotoio/standalone:${KAOTO_TAG} \
+          -t quay.io/kaotoio/standalone:main \
+          -t quay.io/kaotoio/standalone:nightly \
+          -t docker.io/kaotoio/standalone:${KAOTO_TAG}-native \
+          -t docker.io/kaotoio/standalone:main-native \
+          -t docker.io/kaotoio/standalone:nightly-native \
+          -t quay.io/kaotoio/standalone:${KAOTO_TAG}-native \
+          -t quay.io/kaotoio/standalone:main-native \
+          -t quay.io/kaotoio/standalone:nightly-native \
+          .
+
+    - name: 'Build Container Image (jvm)'
+      run: |
+        docker build \
+          -f Dockerfile.native \
+          --build-arg ui_tag=${UI_TAG} \
+          --build-arg api_tag=${API_TAG} \
+          -t docker.io/kaotoio/standalone:${KAOTO_TAG}-jvm \
+          -t docker.io/kaotoio/standalone:main-jvm \
+          -t docker.io/kaotoio/standalone:nightly-jvm \
+          -t quay.io/kaotoio/standalone:${KAOTO_TAG}-jvm \
+          -t quay.io/kaotoio/standalone:main-jvm \
+          -t quay.io/kaotoio/standalone:nightly-jvm \
+          .
+
+    - name: Login to DockerHub
+      if: ${{ github.event_name != 'pull_request' }}
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: 'Push Images to DockerHub'
+      run: |
+        docker push docker.io/kaotoio/standalone --all-tags        
+
+    - name: Login to Quay.io
+      if: ${{ github.event_name != 'pull_request' }}
+      uses: docker/login-action@v2
+      with:
+        registry: quay.io
+        username: ${{ secrets.QUAY_USERNAME }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+
+    - name: 'Push Images to Quay.io'
+      run: |    
+        docker push quay.io/kaotoio/standalone --all-tags
+
