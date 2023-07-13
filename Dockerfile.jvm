@@ -5,7 +5,7 @@ WORKDIR /app
 RUN git clone --depth 1 --branch ${UI_TAG} https://github.com/KaotoIO/kaoto-ui.git --single-branch
 WORKDIR /app/kaoto-ui
 RUN yarn install --mode=skip-build
-RUN KAOTO_API="" yarn run build
+RUN KAOTO_API="." yarn run build
 
 #Backend build
 FROM registry.access.redhat.com/ubi8/openjdk-17:1.16 as BACKEND
@@ -35,4 +35,3 @@ EXPOSE 8080
 USER 185
 ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.kubernetes-client.trust-certs=true"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
-
