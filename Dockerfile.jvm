@@ -11,15 +11,14 @@ RUN KAOTO_API="." yarn run build
 FROM registry.access.redhat.com/ubi8/openjdk-17:1.16 as BACKEND
 ARG API_TAG=main
 USER root
-RUN microdnf install git curl
-COPY mvnw /code/mvnw
-COPY .mvn /code/.mvn
+RUN mkdir /code
+RUN microdnf install git
 WORKDIR /code
 RUN git clone --depth 1 --branch ${API_TAG} https://github.com/KaotoIO/kaoto-backend.git --single-branch
 WORKDIR /code/kaoto-backend
 RUN rm api/src/main/resources/META-INF/resources/*
 COPY --from=FRONTEND /app/kaoto-ui/dist/* api/src/main/resources/META-INF/resources/
-RUN /code/mvnw install -DskipTests
+RUN ./mvnw install -DskipTests
 
 FROM registry.access.redhat.com/ubi8/openjdk-17:1.16
 

@@ -11,16 +11,15 @@ RUN KAOTO_API="." yarn run build
 FROM quay.io/quarkus/ubi-quarkus-native-image:22.3-java17 as BACKEND
 ARG API_TAG=main
 USER root
-RUN microdnf install git curl
-COPY --chown=quarkus:quarkus mvnw /code/mvnw
-COPY --chown=quarkus:quarkus .mvn /code/.mvn
+RUN mkdir /code && chown quarkus:quarkus /code
+RUN microdnf install git
 USER quarkus
 WORKDIR /code
 RUN git clone --depth 1 --branch ${API_TAG} https://github.com/KaotoIO/kaoto-backend.git --single-branch
 WORKDIR /code/kaoto-backend
 RUN rm api/src/main/resources/META-INF/resources/*
 COPY --from=FRONTEND /app/kaoto-ui/dist/* api/src/main/resources/META-INF/resources/
-RUN /code/mvnw install -Pnative -DskipTests
+RUN ./mvnw install -Pnative -DskipTests
 
 #Final image
 FROM quay.io/quarkus/quarkus-micro-image:1.0
