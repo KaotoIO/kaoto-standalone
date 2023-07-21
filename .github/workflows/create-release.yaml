@@ -43,6 +43,7 @@ jobs:
           --build-arg api_tag=$API_TAG \
           -t docker.io/kaotoio/standalone:${KAOTO_TAG}-jvm \
           -t quay.io/kaotoio/standalone:${KAOTO_TAG}-jvm \
+          .
 
     - name: Login to DockerHub
       if: ${{ github.event_name != 'pull_request' }}
