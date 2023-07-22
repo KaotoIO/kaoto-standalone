@@ -11,9 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  KAOTO_TAG: ${{ github.sha }}
+  KAOTO_TAG: ${{ github.run_id }}
   UI_TAG: main
   API_TAG: main
+  MAVEN_ARGS: -V -ntp -Dhttp.keepAlive=false -DskipTests=true -e
 
 jobs:
   build:
@@ -24,13 +25,35 @@ jobs:
         - native
         - jvm
     steps:
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: 17
+        check-latest: true
     - name: 'Checkout'
-      uses: actions/checkout@v3        
-    - name: 'Build Container Image ${{ matrix.variant }}'
+      uses: actions/checkout@v3     
+      with:
+        repository: KaotoIO/kaoto-backend
+        ref: ${{ env.API_TAG }}
+    - name: 'Build Container Image (${{ matrix.variant }})'
       run: |
-        docker build \
-          -f Dockerfile.${{ matrix.variant }} \
-          --build-arg ui_tag=${UI_TAG} \
-          --build-arg api_tag=${API_TAG} \
-          -t docker.io/kaotoio/standalone:$KAOTO_TAG-${{ matrix.variant }} \
-          .
+        ./mvnw ${MAVEN_ARGS} clean install \
+          -Dpmd.skip=true \
+          -DskipTests \
+          -P${{ matrix.variant }} \
+          -Pcontainer-image \
+          -Pstandalone \
+          -Dkaoto.ui.branch=${UI_TAG} \
+          -Dquarkus.container-image.tag=${KAOTO_TAG}-${{ matrix.variant }} \
+          -Dquarkus.container-image.additional-tags=${KAOTO_TAG}-${{ matrix.variant }}-${{ github.sha }}
+    - name: Run built image
+      run: |
+        docker images
+        docker run -d --rm -p 8081:8081 --name kaoto-standalone kaotoio/standalone:${KAOTO_TAG}-${{ matrix.variant }}
+    - name: List running images
+      run: |
+        docker ps -a
+    - name: Check the deployed service URL
+      run: |
+        curl --fail -sv --retry 15 --retry-delay 1 --retry-all-errors http://localhost:8081/q/health
