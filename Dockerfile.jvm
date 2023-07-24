@@ -4,8 +4,8 @@ ARG UI_TAG=main
 WORKDIR /app
 RUN git clone --depth 1 --branch ${UI_TAG} https://github.com/KaotoIO/kaoto-ui.git --single-branch
 WORKDIR /app/kaoto-ui
-RUN yarn install --mode=skip-build
-RUN KAOTO_API="." yarn run build
+RUN yarn workspaces focus @kaoto/kaoto-ui
+RUN KAOTO_API="." yarn workspace @kaoto/kaoto-ui run build
 
 #Backend build
 FROM registry.access.redhat.com/ubi8/openjdk-17:1.16 as BACKEND
@@ -17,7 +17,7 @@ WORKDIR /code
 RUN git clone --depth 1 --branch ${API_TAG} https://github.com/KaotoIO/kaoto-backend.git --single-branch
 WORKDIR /code/kaoto-backend
 RUN rm api/src/main/resources/META-INF/resources/*
-COPY --from=FRONTEND /app/kaoto-ui/dist/* api/src/main/resources/META-INF/resources/
+COPY --from=FRONTEND /app/kaoto-ui/packages/kaoto-ui/dist/* api/src/main/resources/META-INF/resources/
 RUN ./mvnw install -DskipTests
 
 FROM registry.access.redhat.com/ubi8/openjdk-17:1.16
