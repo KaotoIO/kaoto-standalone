@@ -30,7 +30,7 @@ COPY --chown=185 --from=BACKEND /code/kaoto-backend/api/target/quarkus-app/*.jar
 COPY --chown=185 --from=BACKEND /code/kaoto-backend/api/target/quarkus-app/app/ /deployments/app/
 COPY --chown=185 --from=BACKEND /code/kaoto-backend/api/target/quarkus-app/quarkus/ /deployments/quarkus/
 
-EXPOSE 8080
+EXPOSE 8081
 USER 185
 ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.kubernetes-client.trust-certs=true"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
